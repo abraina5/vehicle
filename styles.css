@@ -197,6 +197,12 @@ section h2 {
   color: var(--text-primary);
 }
 
+.record-counter {
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  font-weight: normal;
+}
+
 /* ===== Form Styles ===== */
 /* Requirement 8.5: Vertical stacking for mobile */
 .add-record-form,

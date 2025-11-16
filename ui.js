@@ -10,6 +10,7 @@ class UIManager {
     this.imageModal = document.getElementById("imageModal");
     this.modalImage = document.getElementById("modalImage");
     this.form = document.getElementById("addRecordForm");
+    this.recordCounter = document.getElementById("recordCounter");
 
     // Set up modal close handlers
     this.setupModalHandlers();
@@ -50,6 +51,12 @@ class UIManager {
   renderRecords(records) {
     // Clear existing content
     this.recordsContainer.innerHTML = "";
+
+    // Update record counter
+    const count = records ? records.length : 0;
+    if (this.recordCounter) {
+      this.recordCounter.textContent = `(${count})`;
+    }
 
     // Handle empty results
     if (!records || records.length === 0) {
