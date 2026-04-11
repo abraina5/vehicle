@@ -98,7 +98,7 @@ class App {
       });
     }
 
-    // Set up event listener for delete buttons using event delegation
+    // Set up event listener for record action buttons using event delegation
     const recordsContainer = document.getElementById("recordsContainer");
     if (recordsContainer) {
       recordsContainer.addEventListener("click", (e) => {
@@ -113,6 +113,9 @@ class App {
           }
           const recordId = e.target.getAttribute("data-id");
           this.handleDelete(recordId);
+        } else if (e.target.classList.contains("btn-message")) {
+          const plateNumber = e.target.getAttribute("data-plate");
+          this.uiManager.openMessageComposer(plateNumber);
         }
       });
     }

@@ -9,24 +9,31 @@ class UIManager {
     this.messageContainer = document.getElementById("messageContainer");
     this.imageModal = document.getElementById("imageModal");
     this.modalImage = document.getElementById("modalImage");
+    this.messageModal = document.getElementById("messageModal");
+    this.messageModalPlate = document.getElementById("messageModalPlate");
+    this.messageBody = document.getElementById("messageBody");
+    this.sendMessageBtn = document.getElementById("sendMessageBtn");
+    this.cancelMessageBtn = document.getElementById("cancelMessageBtn");
+    this.closeMessageModalBtn = document.getElementById("closeMessageModal");
     this.form = document.getElementById("addRecordForm");
     this.recordCounter = document.getElementById("recordCounter");
 
     // Set up modal close handlers
     this.setupModalHandlers();
+    this.setupMessageModalHandlers();
   }
 
   /**
    * Set up event handlers for the image modal
    */
   setupModalHandlers() {
-    // Close modal when clicking the close button
+    // Close image modal when clicking the close button
     const closeButton = this.imageModal.querySelector(".modal-close");
     if (closeButton) {
       closeButton.addEventListener("click", () => this.closeImageModal());
     }
 
-    // Close modal when clicking outside the image
+    // Close image modal when clicking outside the image
     this.imageModal.addEventListener("click", (e) => {
       if (e.target === this.imageModal) {
         this.closeImageModal();
@@ -35,10 +42,82 @@ class UIManager {
 
     // Close modal on Escape key
     document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.imageModal.style.display === "flex") {
-        this.closeImageModal();
+      if (e.key === "Escape") {
+        if (this.imageModal.style.display === "flex") {
+          this.closeImageModal();
+        }
+        if (this.messageModal && this.messageModal.style.display === "flex") {
+          this.closeMessageComposer();
+        }
       }
     });
+  }
+
+  setupMessageModalHandlers() {
+    if (this.closeMessageModalBtn) {
+      this.closeMessageModalBtn.addEventListener("click", () =>
+        this.closeMessageComposer()
+      );
+    }
+
+    if (this.cancelMessageBtn) {
+      this.cancelMessageBtn.addEventListener("click", () =>
+        this.closeMessageComposer()
+      );
+    }
+
+    if (this.sendMessageBtn) {
+      this.sendMessageBtn.addEventListener("click", () => {
+        const messageText = this.messageBody.value.trim();
+        if (!messageText) {
+          this.showMessage("Please type a message before continuing.", "error");
+          return;
+        }
+        this.showMessage(
+          "Message ready to send. SMS behavior will be added later.",
+          "success"
+        );
+        this.closeMessageComposer();
+      });
+    }
+
+    if (this.messageModal) {
+      this.messageModal.addEventListener("click", (e) => {
+        if (e.target === this.messageModal) {
+          this.closeMessageComposer();
+        }
+      });
+    }
+  }
+
+  /**
+   * Open the message composer modal for a specific record
+   * @param {string} plateNumber - The vehicle plate number
+   */
+  openMessageComposer(plateNumber) {
+    if (!this.messageModal) return;
+
+    if (this.messageModalPlate) {
+      this.messageModalPlate.textContent = plateNumber || "the vehicle";
+    }
+
+    if (this.messageBody) {
+      this.messageBody.value = "";
+      this.messageBody.placeholder = "Type your own message here...";
+      this.messageBody.focus();
+    }
+
+    this.messageModal.style.display = "flex";
+    document.body.style.overflow = "hidden";
+  }
+
+  /**
+   * Close the message composer modal
+   */
+  closeMessageComposer() {
+    if (!this.messageModal) return;
+    this.messageModal.style.display = "none";
+    document.body.style.overflow = "";
   }
 
   /**

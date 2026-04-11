@@ -306,6 +306,41 @@
       </div>
     </div>
 
+    <!-- Message Composer Modal -->
+    <div
+      id="messageModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="messageModalTitle"
+      style="display: none;"
+    >
+      <div class="modal-content message-modal">
+        <button class="modal-close" id="closeMessageModal" aria-label="Close modal">&times;</button>
+        <h2 id="messageModalTitle">Compose message</h2>
+        <p class="modal-description">
+          Send a quick note to the owner of
+          <strong id="messageModalPlate"></strong>
+        </p>
+        <div class="form-group">
+          <label for="messageBody">Message</label>
+          <textarea
+            id="messageBody"
+            rows="6"
+            placeholder="Type your message here..."
+          ></textarea>
+        </div>
+        <div class="modal-actions">
+          <button id="sendMessageBtn" class="btn-primary" type="button">
+            Continue
+          </button>
+          <button id="cancelMessageBtn" class="btn-secondary" type="button">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- JavaScript Files -->
     <!-- Firebase SDK (Database and Auth only - no Storage needed for base64) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>

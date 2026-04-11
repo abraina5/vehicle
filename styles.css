@@ -525,6 +525,39 @@ section h2 {
   justify-content: center;
 }
 
+.message-modal {
+  flex-direction: column;
+  align-items: stretch;
+  padding: var(--spacing-lg);
+  width: min(100%, 480px);
+  background-color: var(--bg-white);
+  border-radius: var(--radius-lg);
+}
+
+.modal-description {
+  margin: 0 0 var(--spacing-md);
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+#messageBody {
+  width: 100%;
+  min-height: 160px;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
 .modal-close {
   position: absolute;
   top: -40px;
