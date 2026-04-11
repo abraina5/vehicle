@@ -305,12 +305,12 @@ section h2 {
 }
 
 .btn-message {
-  background-color: #f59e0b;
+  background-color: #5d0bf5;
   color: var(--bg-white);
 }
 
 .btn-message:hover {
-  background-color: #d97706;
+  background-color: #2d06d9;
 }
 
 .btn-delete {
