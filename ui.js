@@ -193,11 +193,22 @@ class UIManager {
         </div>
         ${privacyNote}
       </div>
-      <button class="btn-delete" data-id="${
-        record.id
-      }" aria-label="Delete record for ${this.escapeHtml(record.plateNumber)}">
-        Delete
-      </button>
+      <div class="record-actions">
+        <button
+          class="btn-message"
+          type="button"
+          data-phone="${this.escapeHtml(record.phoneNumber)}"
+          data-plate="${this.escapeHtml(record.plateNumber)}"
+          aria-label="Send message to owner of ${this.escapeHtml(record.plateNumber)}"
+        >
+          📩 Send message
+        </button>
+        <button class="btn-delete" data-id="${
+          record.id
+        }" aria-label="Delete record for ${this.escapeHtml(record.plateNumber)}">
+          Delete
+        </button>
+      </div>
     `;
 
     // Add click handler for image to show modal (only if image exists)

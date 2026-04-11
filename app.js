@@ -534,6 +534,11 @@ class App {
   }
 
   /**
+   * Handle send message button clicks
+   * @param {string} phone - The owner's phone number
+   * @param {string} plateNumber - The vehicle plate number
+   */
+  /**
    * Set up real-time listener for Firebase data changes
    */
   setupRealtimeListener() {
