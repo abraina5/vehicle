@@ -15,6 +15,7 @@ class UIManager {
     this.sendMessageBtn = document.getElementById("sendMessageBtn");
     this.cancelMessageBtn = document.getElementById("cancelMessageBtn");
     this.closeMessageModalBtn = document.getElementById("closeMessageModal");
+    this.messagePhone = null;
     this.form = document.getElementById("addRecordForm");
     this.recordCounter = document.getElementById("recordCounter");
 
@@ -73,11 +74,15 @@ class UIManager {
           this.showMessage("Please type a message before continuing.", "error");
           return;
         }
-        this.showMessage(
-          "Message ready to send. SMS behavior will be added later.",
-          "success"
-        );
+
+        const sanitizedPhone = (this.messagePhone || "").replace(/[^\d\+]/g, "");
+        }
+
+        const smsUrl = `sms:${sanitizedPhone}?body=${encodeURIComponent(
+          messageText
+        )}`;
         this.closeMessageComposer();
+        window.location.href = smsUrl;
       });
     }
 
@@ -94,8 +99,10 @@ class UIManager {
    * Open the message composer modal for a specific record
    * @param {string} plateNumber - The vehicle plate number
    */
-  openMessageComposer(plateNumber) {
+  openMessageComposer(plateNumber, phoneNumber) {
     if (!this.messageModal) return;
+
+    this.messagePhone = phoneNumber || null;
 
     if (this.messageModalPlate) {
       this.messageModalPlate.textContent = plateNumber || "the vehicle";

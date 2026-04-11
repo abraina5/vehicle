@@ -115,7 +115,15 @@ class App {
           this.handleDelete(recordId);
         } else if (e.target.classList.contains("btn-message")) {
           const plateNumber = e.target.getAttribute("data-plate");
-          this.uiManager.openMessageComposer(plateNumber);
+          const phoneNumber = e.target.getAttribute("data-phone");
+          if (!phoneNumber || phoneNumber.trim() === "") {
+            this.uiManager.showMessage(
+              "No contact phone number is available for this vehicle.",
+              "error"
+            );
+            return;
+          }
+          this.uiManager.openMessageComposer(plateNumber, phoneNumber);
         }
       });
     }
