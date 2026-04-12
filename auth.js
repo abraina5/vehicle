@@ -5,13 +5,24 @@ class AuthManager {
   constructor() {
     this.currentUser = null;
     this.sessionKey = "userSession";
-    this.configRef = database.ref("config/adminCredentials");
+    this.localMode = Boolean(
+      window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.useLocalData
+    );
+    this.localCredentialsKey = "vehicleApp.adminCredentials";
+    this.configRef =
+      !this.localMode && typeof database !== "undefined"
+        ? database.ref("config/adminCredentials")
+        : null;
 
     // Default admin credentials (will be saved to Firebase on first use)
     this.adminCredentials = {
       username: "admin",
       password: this.hashPassword("admin123"), // Default password
     };
+
+    if (this.localMode) {
+      this.initializeLocalCredentials();
+    }
 
     // Load credentials from Firebase
     this.loadCredentialsFromFirebase();
@@ -24,6 +35,33 @@ class AuthManager {
    * Load admin credentials from Firebase
    */
   async loadCredentialsFromFirebase() {
+    if (this.localMode) {
+      const stored = localStorage.getItem(this.localCredentialsKey);
+      if (stored) {
+        try {
+          this.adminCredentials = JSON.parse(stored);
+          return;
+        } catch (error) {
+          console.error("Error loading local admin credentials:", error);
+        }
+      }
+
+      const seedCredentials =
+        window.LOCAL_APP_DATA &&
+        window.LOCAL_APP_DATA.config &&
+        window.LOCAL_APP_DATA.config.adminCredentials;
+
+      if (seedCredentials) {
+        this.adminCredentials = seedCredentials;
+      }
+
+      localStorage.setItem(
+        this.localCredentialsKey,
+        JSON.stringify(this.adminCredentials)
+      );
+      return;
+    }
+
     try {
       const snapshot = await this.configRef.once("value");
       if (snapshot.exists()) {
@@ -43,12 +81,40 @@ class AuthManager {
    * Save admin credentials to Firebase
    */
   async saveCredentialsToFirebase() {
+    if (this.localMode) {
+      localStorage.setItem(
+        this.localCredentialsKey,
+        JSON.stringify(this.adminCredentials)
+      );
+      return;
+    }
+
     try {
       await this.configRef.set(this.adminCredentials);
       console.log("Admin credentials saved to Firebase");
     } catch (error) {
       console.error("Error saving credentials to Firebase:", error);
       throw error;
+    }
+  }
+
+  initializeLocalCredentials() {
+    const shouldReset =
+      window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.resetOnLoad;
+    const hasStoredCredentials =
+      localStorage.getItem(this.localCredentialsKey) !== null;
+
+    if (!hasStoredCredentials || shouldReset) {
+      const seedCredentials =
+        window.LOCAL_APP_DATA &&
+        window.LOCAL_APP_DATA.config &&
+        window.LOCAL_APP_DATA.config.adminCredentials;
+
+      const credentialsToStore = seedCredentials || this.adminCredentials;
+      localStorage.setItem(
+        this.localCredentialsKey,
+        JSON.stringify(credentialsToStore)
+      );
     }
   }
 

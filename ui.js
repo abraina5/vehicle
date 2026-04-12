@@ -76,7 +76,6 @@ class UIManager {
         }
 
         const sanitizedPhone = (this.messagePhone || "").replace(/[^\d\+]/g, "");
-        }
 
         const smsUrl = `sms:${sanitizedPhone}?body=${encodeURIComponent(
           messageText

@@ -8,12 +8,23 @@ class FormHandler {
     this.maxImageSize = 5 * 1024 * 1024; // 5MB in bytes
     this.allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
     this.isProcessingOCR = false;
-    this.apiKeyRef = database.ref('config/apiKey');
+    this.localMode = Boolean(
+      window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.useLocalData
+    );
+    this.localApiKeyStorageKey = "vehicleApp.apiKey";
+    this.apiKeyRef =
+      !this.localMode && typeof database !== "undefined"
+        ? database.ref('config/apiKey')
+        : null;
     
     // Plate Recognizer API configuration
     // Get your free API key from: https://platerecognizer.com
     this.plateRecognizerApiKey = '';
     this.plateRecognizerApiUrl = 'https://api.platerecognizer.com/v1/plate-reader/';
+
+    if (this.localMode) {
+      this.initializeLocalApiKey();
+    }
     
     // Load API key from Firebase
     this.loadApiKeyFromFirebase();
@@ -23,6 +34,23 @@ class FormHandler {
    * Load API key from Firebase
    */
   async loadApiKeyFromFirebase() {
+    if (this.localMode) {
+      const storedApiKey = localStorage.getItem(this.localApiKeyStorageKey);
+      if (storedApiKey !== null) {
+        this.plateRecognizerApiKey = storedApiKey;
+        return;
+      }
+
+      const seedApiKey =
+        window.LOCAL_APP_DATA &&
+        window.LOCAL_APP_DATA.config &&
+        window.LOCAL_APP_DATA.config.apiKey;
+
+      this.plateRecognizerApiKey = seedApiKey || '';
+      localStorage.setItem(this.localApiKeyStorageKey, this.plateRecognizerApiKey);
+      return;
+    }
+
     try {
       const snapshot = await this.apiKeyRef.once('value');
       if (snapshot.exists()) {
@@ -41,6 +69,12 @@ class FormHandler {
   async setApiKey(apiKey) {
     this.plateRecognizerApiKey = apiKey;
     try {
+      if (this.localMode) {
+        localStorage.setItem(this.localApiKeyStorageKey, apiKey);
+        console.log('API key saved to local editable store');
+        return;
+      }
+
       if (apiKey) {
         await this.apiKeyRef.set(apiKey);
         console.log('API key saved to Firebase');
@@ -51,6 +85,22 @@ class FormHandler {
     } catch (error) {
       console.error('Error saving API key to Firebase:', error);
       throw error;
+    }
+  }
+
+  initializeLocalApiKey() {
+    const shouldReset =
+      window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.resetOnLoad;
+    const hasStoredApiKey =
+      localStorage.getItem(this.localApiKeyStorageKey) !== null;
+
+    if (!hasStoredApiKey || shouldReset) {
+      const seedApiKey =
+        window.LOCAL_APP_DATA &&
+        window.LOCAL_APP_DATA.config &&
+        window.LOCAL_APP_DATA.config.apiKey;
+
+      localStorage.setItem(this.localApiKeyStorageKey, seedApiKey || '');
     }
   }
 

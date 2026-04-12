@@ -5,9 +5,20 @@
  */
 class StorageManager {
   constructor() {
-    this.recordsRef = database.ref("records");
     this.listeners = [];
     this.maxImageSize = 400 * 1024; // 400 KB recommended for base64
+    this.localMode = Boolean(
+      window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.useLocalData
+    );
+    this.localRecordsKey = "vehicleApp.localRecords";
+    this.recordsRef =
+      !this.localMode && typeof database !== "undefined"
+        ? database.ref("records")
+        : null;
+
+    if (this.localMode) {
+      this.initializeLocalRecords();
+    }
   }
 
   /**
@@ -17,6 +28,12 @@ class StorageManager {
    */
   isStorageAvailable() {
     try {
+      if (this.localMode) {
+        localStorage.setItem("__vehicle_storage_test__", "1");
+        localStorage.removeItem("__vehicle_storage_test__");
+        return true;
+      }
+
       return typeof firebase !== "undefined" && firebase.database !== undefined;
     } catch (e) {
       console.error("Firebase not available:", e);
@@ -86,6 +103,22 @@ class StorageManager {
         createdAt: record.createdAt,
       };
 
+      if (this.localMode) {
+        const records = this.getLocalRecords();
+        const existingIndex = records.findIndex((item) => item.id === record.id);
+
+        if (existingIndex >= 0) {
+          records[existingIndex] = firebaseRecord;
+        } else {
+          records.push(firebaseRecord);
+        }
+
+        this.setLocalRecords(records);
+        this.notifyLocalListeners();
+        console.log("Record saved to local editable store:", record.id);
+        return true;
+      }
+
       // Save to Firebase Realtime Database
       await this.recordsRef.child(record.id).set(firebaseRecord);
       console.log("Record saved to Firebase with base64 image:", record.id);
@@ -103,6 +136,10 @@ class StorageManager {
    */
   async getAllRecords() {
     try {
+      if (this.localMode) {
+        return this.getSortedLocalRecords();
+      }
+
       const snapshot = await this.recordsRef.once("value");
       const records = [];
 
@@ -127,6 +164,12 @@ class StorageManager {
    * @param {Function} callback - Callback function to call when data changes
    */
   onRecordsChange(callback) {
+    if (this.localMode) {
+      this.listeners.push(callback);
+      callback(this.getSortedLocalRecords());
+      return;
+    }
+
     const listener = this.recordsRef.on("value", (snapshot) => {
       const records = [];
       snapshot.forEach((childSnapshot) => {
@@ -145,7 +188,9 @@ class StorageManager {
    * Stop listening for real-time updates
    */
   offRecordsChange() {
-    this.recordsRef.off("value");
+    if (this.recordsRef) {
+      this.recordsRef.off("value");
+    }
     this.listeners = [];
   }
 
@@ -157,6 +202,14 @@ class StorageManager {
    */
   async deleteRecord(id) {
     try {
+      if (this.localMode) {
+        const records = this.getLocalRecords().filter((record) => record.id !== id);
+        this.setLocalRecords(records);
+        this.notifyLocalListeners();
+        console.log("Record deleted from local editable store:", id);
+        return true;
+      }
+
       // Delete record from Database (image is stored as base64 in the record)
       await this.recordsRef.child(id).remove();
       console.log("Record deleted from Firebase:", id);
@@ -164,6 +217,55 @@ class StorageManager {
     } catch (e) {
       console.error("Error deleting record from Firebase:", e);
       return false;
+    }
+  }
+
+  getLocalRecords() {
+    const stored = localStorage.getItem(this.localRecordsKey);
+
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        console.error("Failed to parse local records:", error);
+      }
+    }
+
+    const seedRecords =
+      window.LOCAL_APP_DATA && Array.isArray(window.LOCAL_APP_DATA.records)
+        ? window.LOCAL_APP_DATA.records
+        : [];
+
+    return [...seedRecords];
+  }
+
+  setLocalRecords(records) {
+    localStorage.setItem(this.localRecordsKey, JSON.stringify(records));
+  }
+
+  getSortedLocalRecords() {
+    const records = this.getLocalRecords();
+    records.sort((a, b) => b.createdAt - a.createdAt);
+    return records;
+  }
+
+  notifyLocalListeners() {
+    const records = this.getSortedLocalRecords();
+    this.listeners.forEach((callback) => callback(records));
+  }
+
+  initializeLocalRecords() {
+    const shouldReset =
+      window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.resetOnLoad;
+    const hasStoredRecords = localStorage.getItem(this.localRecordsKey) !== null;
+
+    if (!hasStoredRecords || shouldReset) {
+      const seedRecords =
+        window.LOCAL_APP_DATA && Array.isArray(window.LOCAL_APP_DATA.records)
+          ? window.LOCAL_APP_DATA.records
+          : [];
+      this.setLocalRecords(seedRecords);
     }
   }
 }

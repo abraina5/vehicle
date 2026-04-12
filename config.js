@@ -12,7 +12,7 @@ class ConfigManager {
    */
   setupConfigUI() {
     // Check if API key exists
-    const apiKey = localStorage.getItem('plateRecognizerApiKey');
+    const apiKey = localStorage.getItem('vehicleApp.apiKey');
     this.updateConfigStatus(!!apiKey);
 
     // Set up event listeners
@@ -35,7 +35,7 @@ class ConfigManager {
           try {
             await this.formHandler.setApiKey(apiKey);
             this.updateConfigStatus(true);
-            this.showMessage('API key saved to Firebase successfully!', 'success');
+            this.showMessage('API key saved successfully!', 'success');
             configPanel.style.display = 'none';
           } catch (error) {
             this.showMessage('Failed to save API key. Please try again.', 'error');
@@ -52,7 +52,7 @@ class ConfigManager {
           await this.formHandler.setApiKey('');
           apiKeyInput.value = '';
           this.updateConfigStatus(false);
-          this.showMessage('API key cleared from Firebase. Using Tesseract.js fallback.', 'info');
+          this.showMessage('API key cleared. Using Tesseract.js fallback.', 'info');
         } catch (error) {
           this.showMessage('Failed to clear API key. Please try again.', 'error');
         }
@@ -71,6 +71,18 @@ class ConfigManager {
     if (!apiKeyInput) return;
     
     try {
+      if (window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.useLocalData) {
+        const shouldReset = window.LOCAL_APP_DATA.resetOnLoad;
+        const localApiKey = shouldReset
+          ? window.LOCAL_APP_DATA.config.apiKey || ''
+          : localStorage.getItem('vehicleApp.apiKey');
+        if (localApiKey !== null) {
+          apiKeyInput.value = localApiKey;
+          this.updateConfigStatus(!!localApiKey);
+          return;
+        }
+      }
+
       const snapshot = await database.ref('config/apiKey').once('value');
       if (snapshot.exists()) {
         apiKeyInput.value = snapshot.val();

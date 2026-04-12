@@ -42,7 +42,7 @@ class App {
     // Requirement 5.4: Display error if unavailable
     if (!this.storageManager.isStorageAvailable()) {
       this.uiManager.showMessage(
-        "Local storage is not available. Data cannot be saved.",
+        "Storage is not available. Data cannot be saved.",
         "error"
       );
       // Disable form submission if storage is unavailable
@@ -57,7 +57,7 @@ class App {
     this.setupEventListeners();
 
     // Load and display all records on page load
-    // Requirement 5.2: Load previously stored records from Firebase
+    // Requirement 5.2: Load previously stored records from active storage
     this.loadAndDisplayRecords();
 
     // Set up real-time listener for record changes
@@ -248,7 +248,7 @@ class App {
           if (success) {
             changePasswordModal.style.display = "none";
             this.uiManager.showMessage(
-              "Password changed in Firebase successfully! All devices will use the new password.",
+              "Password changed successfully.",
               "success"
             );
             changePasswordForm.reset();
@@ -401,7 +401,10 @@ class App {
    */
   async handleFormSubmit(event) {
     // Show loading message
-    this.uiManager.showMessage("📤 Uploading to Firebase...", "info");
+    const saveTarget = this.storageManager.localMode
+      ? "local editable data"
+      : "Firebase";
+    this.uiManager.showMessage(`Saving to ${saveTarget}...`, "info");
 
     await this.formHandler.handleSubmit(
       event,
@@ -410,7 +413,7 @@ class App {
         // Requirement 1.5: Display confirmation message
         const hasImage = record.imageData ? "with image" : "without image";
         this.uiManager.showMessage(
-          `✅ Record successfully stored in Firebase! Plate: ${
+          `Record successfully stored in ${saveTarget}! Plate: ${
             record.plateNumber
           } (${hasImage})`,
           "success"
@@ -550,11 +553,11 @@ class App {
    * @param {string} plateNumber - The vehicle plate number
    */
   /**
-   * Set up real-time listener for Firebase data changes
+   * Set up real-time listener for storage data changes
    */
   setupRealtimeListener() {
     this.storageManager.onRecordsChange((records) => {
-      console.log("Records updated from Firebase:", records.length);
+      console.log("Records updated from storage:", records.length);
 
       // Apply current search filters before displaying
       const filteredRecords = this.applySearchFilters(records);
