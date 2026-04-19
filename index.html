@@ -317,12 +317,17 @@
     >
       <div class="modal-content message-modal">
         <button class="modal-close" id="closeMessageModal" aria-label="Close modal">&times;</button>
-        <h2 id="messageModalTitle">Compose message</h2>
-        <p class="modal-description">
-          Send a quick note to the owner of
-          <strong id="messageModalPlate"></strong>
-        </p>
-        <div class="form-group">
+        <div class="message-modal-header">
+          <div>
+            <h2 id="messageModalTitle">Compose message</h2>
+            <p class="modal-description">
+              Send a quick note to the owner of
+              <strong id="messageModalPlate"></strong>
+            </p>
+          </div>
+          <span class="message-modal-badge">SEND MESSAGE</span>
+        </div>
+        <div class="form-group message-body-group">
           <label for="messageBody">Message</label>
           <textarea
             id="messageBody"
@@ -331,11 +336,11 @@
           ></textarea>
         </div>
         <div class="modal-actions">
-          <button id="sendMessageBtn" class="btn-primary" type="button">
-            Send SMS
-          </button>
           <button id="cancelMessageBtn" class="btn-secondary" type="button">
             Cancel
+          </button>
+          <button id="sendMessageBtn" class="btn-primary" type="button">
+            Send
           </button>
         </div>
       </div>

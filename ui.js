@@ -16,6 +16,7 @@ class UIManager {
     this.cancelMessageBtn = document.getElementById("cancelMessageBtn");
     this.closeMessageModalBtn = document.getElementById("closeMessageModal");
     this.messagePhone = null;
+    this.isSendingMessage = false;
     this.form = document.getElementById("addRecordForm");
     this.recordCounter = document.getElementById("recordCounter");
 
@@ -68,7 +69,7 @@ class UIManager {
     }
 
     if (this.sendMessageBtn) {
-      this.sendMessageBtn.addEventListener("click", () => {
+      this.sendMessageBtn.addEventListener("click", async () => {
         const messageText = this.messageBody.value.trim();
         if (!messageText) {
           this.showMessage("Please type a message before continuing.", "error");
@@ -76,6 +77,7 @@ class UIManager {
         }
 
         const sanitizedPhone = (this.messagePhone || "").replace(/[^\d\+]/g, "");
+        }
 
         const smsUrl = `sms:${sanitizedPhone}?body=${encodeURIComponent(
           messageText
@@ -110,9 +112,11 @@ class UIManager {
     if (this.messageBody) {
       this.messageBody.value = "";
       this.messageBody.placeholder = "Type your own message here...";
+      this.messageBody.disabled = false;
       this.messageBody.focus();
     }
 
+    this.setMessageSendingState(false);
     this.messageModal.style.display = "flex";
     document.body.style.overflow = "hidden";
   }
@@ -122,8 +126,69 @@ class UIManager {
    */
   closeMessageComposer() {
     if (!this.messageModal) return;
+    this.setMessageSendingState(false);
     this.messageModal.style.display = "none";
     document.body.style.overflow = "";
+  }
+
+  setMessageSendingState(isSending) {
+    this.isSendingMessage = isSending;
+
+    if (this.sendMessageBtn) {
+      this.sendMessageBtn.disabled = isSending;
+      this.sendMessageBtn.textContent = isSending ? "Sending..." : "Send";
+    }
+
+    if (this.cancelMessageBtn) {
+      this.cancelMessageBtn.disabled = isSending;
+    }
+
+    if (this.closeMessageModalBtn) {
+      this.closeMessageModalBtn.disabled = isSending;
+    }
+
+    if (this.messageBody) {
+      this.messageBody.disabled = isSending;
+    }
+  }
+
+  async sendMessage(messageText) {
+    const endpoint = window.messageServiceConfig?.endpoint;
+    const phoneNumber = (this.messagePhone || "").trim();
+    const plateNumber = this.messageModalPlate?.textContent?.trim() || "Unknown plate";
+
+    if (!endpoint) {
+      throw new Error("Message service is not configured.");
+    }
+
+    if (!phoneNumber) {
+      throw new Error("No phone number is available for this vehicle.");
+    }
+
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        phoneNumber,
+        plateNumber,
+        message: messageText,
+      }),
+    });
+
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch (error) {
+      payload = null;
+    }
+
+    if (!response.ok) {
+      throw new Error(payload?.error || "The message service rejected the request.");
+    }
+
+    return payload;
   }
 
   /**
@@ -286,7 +351,7 @@ class UIManager {
           data-plate="${this.escapeHtml(record.plateNumber)}"
           aria-label="Send message to owner of ${this.escapeHtml(record.plateNumber)}"
         >
-          📩 Send message
+          SEND MESSAGE
         </button>
         <button class="btn-delete" data-id="${
           record.id

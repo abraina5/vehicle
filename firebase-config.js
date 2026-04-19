@@ -15,16 +15,34 @@ const firebaseConfig = {
   appId: "1:146550051456:web:7994c5002493bcfd2d8c65",
 };
 
-// Initialize Firebase
-firebase.initializeApp(firebaseConfig);
+let database = null;
+let auth = null;
+let messageServiceConfig = {
+  endpoint: `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/sendVehicleMessage`,
+};
 
-// Get references to Firebase services (no Storage needed for base64)
-const database = firebase.database();
-const auth = firebase.auth();
+if (typeof firebase !== 'undefined') {
+  try {
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
 
-// Sign in anonymously for write permissions
-auth.signInAnonymously().catch((error) => {
-  console.error("Firebase auth error:", error);
-});
+    // Get references to Firebase services (no Storage needed for base64)
+    database = firebase.database();
+    auth = firebase.auth();
 
-console.log("Firebase initialized successfully (using base64 for images)");
+    // Sign in anonymously for write permissions
+    auth.signInAnonymously().catch((error) => {
+      console.error("Firebase auth error:", error);
+    });
+
+    console.log("Firebase initialized successfully (using base64 for images)");
+  } catch (error) {
+    console.error("Firebase initialization failed:", error);
+  }
+} else {
+  console.warn("Firebase SDK is not available. Local storage fallback will be used.");
+}
+
+if (typeof window !== "undefined") {
+  window.messageServiceConfig = messageServiceConfig;
+}

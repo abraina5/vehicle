@@ -19,6 +19,27 @@ class StorageManager {
     if (this.localMode) {
       this.initializeLocalRecords();
     }
+    this.localStorageKey = "vehicle_records";
+    this.useLocalStorage = this.isLocalModeRequested() || !this.isFirebaseAvailable();
+
+    if (!this.useLocalStorage) {
+      this.recordsRef = database.ref("records");
+    } else {
+      console.log("Firebase unavailable or local mode requested; using localStorage fallback for records.");
+    }
+  }
+
+  /**
+   * Check whether local mode is requested via URL parameter
+   * @returns {boolean}
+   */
+  isLocalModeRequested() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("local") === "true";
+    } catch (e) {
+      return false;
+    }
   }
 
   /**
@@ -26,7 +47,7 @@ class StorageManager {
    * Requirement 5.4: Display error when storage unavailable
    * @returns {boolean} True if Firebase is available
    */
-  isStorageAvailable() {
+  isFirebaseAvailable() {
     try {
       if (this.localMode) {
         localStorage.setItem("__vehicle_storage_test__", "1");
@@ -36,7 +57,25 @@ class StorageManager {
 
       return typeof firebase !== "undefined" && firebase.database !== undefined;
     } catch (e) {
-      console.error("Firebase not available:", e);
+      return false;
+    }
+  }
+
+  /**
+   * Check if storage is available for the app
+   * @returns {boolean} True if Firebase or localStorage is available
+   */
+  isStorageAvailable() {
+    try {
+      if (this.useLocalStorage) {
+        const testKey = "__vehicle_storage_test__";
+        window.localStorage.setItem(testKey, "1");
+        window.localStorage.removeItem(testKey);
+        return true;
+      }
+      return this.isFirebaseAvailable();
+    } catch (e) {
+      console.error("Storage not available:", e);
       return false;
     }
   }
@@ -77,9 +116,9 @@ class StorageManager {
   }
 
   /**
-   * Save a license plate record to Firebase
-   * Requirement 1.2: Store record in Firebase Database
-   * Requirement 5.1: Persist data in Firebase
+   * Save a license plate record to Firebase or localStorage
+   * Requirement 1.2: Store record in database
+   * Requirement 5.1: Persist data in Firebase or local mode
    * @param {Object} record - The record to save
    * @returns {Promise<boolean>} Promise that resolves to true if save was successful
    */
@@ -93,13 +132,12 @@ class StorageManager {
         console.log("Image compressed successfully");
       }
 
-      // Prepare record for Firebase (with compressed base64 image)
-      const firebaseRecord = {
+      const savedRecord = {
         id: record.id,
         plateNumber: record.plateNumber,
         ownerName: record.ownerName,
         phoneNumber: record.phoneNumber,
-        imageData: imageData, // Store base64 directly in database
+        imageData: imageData,
         createdAt: record.createdAt,
       };
 
@@ -119,42 +157,88 @@ class StorageManager {
         return true;
       }
 
-      // Save to Firebase Realtime Database
-      await this.recordsRef.child(record.id).set(firebaseRecord);
+      if (this.useLocalStorage) {
+        const records = this.loadLocalRecords();
+        const existingIndex = records.findIndex((item) => item.id === record.id);
+        if (existingIndex >= 0) {
+          records[existingIndex] = savedRecord;
+        } else {
+          records.push(savedRecord);
+        }
+        this.saveLocalRecords(records);
+        this.notifyRecordsChange(records);
+        console.log("Record saved to localStorage:", record.id);
+        return true;
+      }
+
+      await this.recordsRef.child(record.id).set(savedRecord);
       console.log("Record saved to Firebase with base64 image:", record.id);
       return true;
     } catch (e) {
-      console.error("Error saving record to Firebase:", e);
+      console.error("Error saving record:", e);
       throw new Error("Failed to save record. Please try again.");
     }
   }
 
   /**
-   * Retrieve all stored records from Firebase
+   * Load records from browser localStorage
+   * @returns {Array} Parsed list of stored records
+   */
+  loadLocalRecords() {
+    try {
+      const raw = window.localStorage.getItem(this.localStorageKey);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      console.error("Error loading records from localStorage:", e);
+      return [];
+    }
+  }
+
+  /**
+   * Write records to browser localStorage
+   * @param {Array} records - The records to save
+   */
+  saveLocalRecords(records) {
+    try {
+      window.localStorage.setItem(this.localStorageKey, JSON.stringify(records));
+    } catch (e) {
+      console.error("Error saving records to localStorage:", e);
+    }
+  }
+
+  /**
+   * Notify listeners when localStorage records change
+   * @param {Array} records - Current record list
+   */
+  notifyRecordsChange(records) {
+    this.listeners.forEach((callback) => {
+      try {
+        callback(records);
+      } catch (e) {
+        console.error("Error notifying record listener:", e);
+      }
+    });
+  }
+
+  /**
+   * Retrieve all stored records from Firebase or localStorage
    * Requirement 5.2: Load previously stored records
    * @returns {Promise<Array>} Promise that resolves to array of record objects
    */
   async getAllRecords() {
     try {
-      if (this.localMode) {
-        return this.getSortedLocalRecords();
-      }
-
       const snapshot = await this.recordsRef.once("value");
       const records = [];
 
       snapshot.forEach((childSnapshot) => {
         const record = childSnapshot.val();
-        // imageData is already in base64 format, no conversion needed
         records.push(record);
       });
 
-      // Sort by creation date (newest first)
       records.sort((a, b) => b.createdAt - a.createdAt);
-
       return records;
     } catch (e) {
-      console.error("Error retrieving records from Firebase:", e);
+      console.error("Error retrieving records:", e);
       return [];
     }
   }
@@ -164,17 +248,10 @@ class StorageManager {
    * @param {Function} callback - Callback function to call when data changes
    */
   onRecordsChange(callback) {
-    if (this.localMode) {
-      this.listeners.push(callback);
-      callback(this.getSortedLocalRecords());
-      return;
-    }
-
     const listener = this.recordsRef.on("value", (snapshot) => {
       const records = [];
       snapshot.forEach((childSnapshot) => {
         const record = childSnapshot.val();
-        // imageData is already in base64 format, no conversion needed
         records.push(record);
       });
       records.sort((a, b) => b.createdAt - a.createdAt);
@@ -188,34 +265,24 @@ class StorageManager {
    * Stop listening for real-time updates
    */
   offRecordsChange() {
-    if (this.recordsRef) {
-      this.recordsRef.off("value");
-    }
+    this.recordsRef.off("value");
     this.listeners = [];
   }
 
   /**
-   * Delete a record by ID from Firebase
+   * Delete a record by ID from Firebase or localStorage
    * Requirement 6.2: Remove record from Firebase
    * @param {string} id - The ID of the record to delete
    * @returns {Promise<boolean>} Promise that resolves to true if deletion was successful
    */
   async deleteRecord(id) {
     try {
-      if (this.localMode) {
-        const records = this.getLocalRecords().filter((record) => record.id !== id);
-        this.setLocalRecords(records);
-        this.notifyLocalListeners();
-        console.log("Record deleted from local editable store:", id);
-        return true;
-      }
-
       // Delete record from Database (image is stored as base64 in the record)
       await this.recordsRef.child(id).remove();
       console.log("Record deleted from Firebase:", id);
       return true;
     } catch (e) {
-      console.error("Error deleting record from Firebase:", e);
+      console.error("Error deleting record:", e);
       return false;
     }
   }

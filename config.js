@@ -64,12 +64,12 @@ class ConfigManager {
   }
 
   /**
-   * Load API key from Firebase and populate input field
+   * Load API key from storage and populate input field
    * @param {HTMLInputElement} apiKeyInput - The API key input element
    */
   async loadApiKeyToInput(apiKeyInput) {
     if (!apiKeyInput) return;
-    
+
     try {
       if (window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.useLocalData) {
         const shouldReset = window.LOCAL_APP_DATA.resetOnLoad;
@@ -83,6 +83,18 @@ class ConfigManager {
         }
       }
 
+      const localApiKey = window.localStorage.getItem('plateRecognizerApiKey');
+      if (localApiKey) {
+        apiKeyInput.value = localApiKey;
+        this.updateConfigStatus(true);
+        return;
+      }
+
+      if (!this.isFirebaseAvailable()) {
+        this.updateConfigStatus(false);
+        return;
+      }
+
       const snapshot = await database.ref('config/apiKey').once('value');
       if (snapshot.exists()) {
         apiKeyInput.value = snapshot.val();
@@ -93,6 +105,18 @@ class ConfigManager {
     } catch (error) {
       console.error('Error loading API key:', error);
       this.updateConfigStatus(false);
+    }
+  }
+
+  /**
+   * Check if Firebase is available
+   * @returns {boolean}
+   */
+  isFirebaseAvailable() {
+    try {
+      return typeof firebase !== 'undefined' && firebase.database !== undefined;
+    } catch (e) {
+      return false;
     }
   }
 

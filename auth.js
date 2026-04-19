@@ -5,7 +5,11 @@ class AuthManager {
   constructor() {
     this.currentUser = null;
     this.sessionKey = "userSession";
-    this.localMode = Boolean(
+    this.localCredentialsKey = "vehicle_admin_credentials";
+    this.useLocalStorage = this.isLocalModeRequested() || !this.isFirebaseAvailable();
+
+    if (!this.useLocalStorage) {
+      this.localMode = Boolean(
       window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.useLocalData
     );
     this.localCredentialsKey = "vehicleApp.adminCredentials";
@@ -13,18 +17,19 @@ class AuthManager {
       !this.localMode && typeof database !== "undefined"
         ? database.ref("config/adminCredentials")
         : null;
+    }
 
-    // Default admin credentials (will be saved to Firebase on first use)
+    // Default admin credentials (will be saved on first use)
     this.adminCredentials = {
       username: "admin",
-      password: this.hashPassword("admin123"), // Default password
+      password: this.hashPassword("admin123"),
     };
 
     if (this.localMode) {
       this.initializeLocalCredentials();
     }
 
-    // Load credentials from Firebase
+    // Load credentials from storage
     this.loadCredentialsFromFirebase();
 
     // Check for existing session
@@ -32,7 +37,32 @@ class AuthManager {
   }
 
   /**
-   * Load admin credentials from Firebase
+   * Check whether local mode is requested via URL parameter
+   * @returns {boolean}
+   */
+  isLocalModeRequested() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("local") === "true";
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Check whether Firebase is available
+   * @returns {boolean}
+   */
+  isFirebaseAvailable() {
+    try {
+      return typeof firebase !== "undefined" && firebase.database !== undefined;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Load admin credentials from Firebase or localStorage
    */
   async loadCredentialsFromFirebase() {
     if (this.localMode) {
@@ -63,22 +93,33 @@ class AuthManager {
     }
 
     try {
+      if (this.useLocalStorage) {
+        const raw = window.localStorage.getItem(this.localCredentialsKey);
+        if (raw) {
+          this.adminCredentials = JSON.parse(raw);
+          console.log("Admin credentials loaded from localStorage");
+        } else {
+          await this.saveCredentialsToFirebase();
+          console.log("Default admin credentials saved to localStorage");
+        }
+        return;
+      }
+
       const snapshot = await this.configRef.once("value");
       if (snapshot.exists()) {
         this.adminCredentials = snapshot.val();
         console.log("Admin credentials loaded from Firebase");
       } else {
-        // First time setup - save default credentials to Firebase
         await this.saveCredentialsToFirebase();
         console.log("Default admin credentials saved to Firebase");
       }
     } catch (error) {
-      console.error("Error loading credentials from Firebase:", error);
+      console.error("Error loading credentials:", error);
     }
   }
 
   /**
-   * Save admin credentials to Firebase
+   * Save admin credentials to Firebase or localStorage
    */
   async saveCredentialsToFirebase() {
     if (this.localMode) {
@@ -90,10 +131,16 @@ class AuthManager {
     }
 
     try {
+      if (this.useLocalStorage) {
+        window.localStorage.setItem(this.localCredentialsKey, JSON.stringify(this.adminCredentials));
+        console.log("Admin credentials saved to localStorage");
+        return;
+      }
+
       await this.configRef.set(this.adminCredentials);
       console.log("Admin credentials saved to Firebase");
     } catch (error) {
-      console.error("Error saving credentials to Firebase:", error);
+      console.error("Error saving credentials:", error);
       throw error;
     }
   }

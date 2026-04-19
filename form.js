@@ -8,7 +8,11 @@ class FormHandler {
     this.maxImageSize = 5 * 1024 * 1024; // 5MB in bytes
     this.allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp'];
     this.isProcessingOCR = false;
-    this.localMode = Boolean(
+    this.localApiKeyStorageKey = 'plateRecognizerApiKey';
+    this.useLocalStorage = this.isLocalModeRequested() || !this.isFirebaseAvailable();
+
+    if (!this.useLocalStorage) {
+      this.localMode = Boolean(
       window.LOCAL_APP_DATA && window.LOCAL_APP_DATA.useLocalData
     );
     this.localApiKeyStorageKey = "vehicleApp.apiKey";
@@ -16,22 +20,44 @@ class FormHandler {
       !this.localMode && typeof database !== "undefined"
         ? database.ref('config/apiKey')
         : null;
-    
+    }
+
     // Plate Recognizer API configuration
     // Get your free API key from: https://platerecognizer.com
     this.plateRecognizerApiKey = '';
     this.plateRecognizerApiUrl = 'https://api.platerecognizer.com/v1/plate-reader/';
-
-    if (this.localMode) {
-      this.initializeLocalApiKey();
-    }
     
     // Load API key from Firebase
     this.loadApiKeyFromFirebase();
   }
 
   /**
-   * Load API key from Firebase
+   * Check whether local mode is requested via URL parameter
+   * @returns {boolean}
+   */
+  isLocalModeRequested() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('local') === 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Check whether Firebase is available
+   * @returns {boolean}
+   */
+  isFirebaseAvailable() {
+    try {
+      return typeof firebase !== 'undefined' && firebase.database !== undefined;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /**
+   * Load API key from Firebase or localStorage
    */
   async loadApiKeyFromFirebase() {
     if (this.localMode) {
@@ -52,13 +78,22 @@ class FormHandler {
     }
 
     try {
+      if (this.useLocalStorage) {
+        const localApiKey = window.localStorage.getItem(this.localApiKeyStorageKey);
+        if (localApiKey) {
+          this.plateRecognizerApiKey = localApiKey;
+          console.log('API key loaded from localStorage');
+        }
+        return;
+      }
+
       const snapshot = await this.apiKeyRef.once('value');
       if (snapshot.exists()) {
         this.plateRecognizerApiKey = snapshot.val();
         console.log('API key loaded from Firebase');
       }
     } catch (error) {
-      console.error('Error loading API key from Firebase:', error);
+      console.error('Error loading API key from storage:', error);
     }
   }
 
@@ -69,12 +104,6 @@ class FormHandler {
   async setApiKey(apiKey) {
     this.plateRecognizerApiKey = apiKey;
     try {
-      if (this.localMode) {
-        localStorage.setItem(this.localApiKeyStorageKey, apiKey);
-        console.log('API key saved to local editable store');
-        return;
-      }
-
       if (apiKey) {
         await this.apiKeyRef.set(apiKey);
         console.log('API key saved to Firebase');
@@ -83,7 +112,7 @@ class FormHandler {
         console.log('API key removed from Firebase');
       }
     } catch (error) {
-      console.error('Error saving API key to Firebase:', error);
+      console.error('Error saving API key to storage:', error);
       throw error;
     }
   }

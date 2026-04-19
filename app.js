@@ -38,6 +38,13 @@ class App {
     // Update UI based on auth status
     this.updateAuthUI();
 
+    if (this.storageManager.useLocalStorage) {
+      this.uiManager.showMessage(
+        "Running in local test mode using browser storage. Records are saved locally in this browser.",
+        "info"
+      );
+    }
+
     // Check localStorage availability on init
     // Requirement 5.4: Display error if unavailable
     if (!this.storageManager.isStorageAvailable()) {
@@ -57,7 +64,7 @@ class App {
     this.setupEventListeners();
 
     // Load and display all records on page load
-    // Requirement 5.2: Load previously stored records from active storage
+    // Requirement 5.2: Load previously stored records from Firebase
     this.loadAndDisplayRecords();
 
     // Set up real-time listener for record changes
