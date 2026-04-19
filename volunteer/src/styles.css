@@ -1,0 +1,301 @@
+:root {
+  color-scheme: light;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.5;
+  color: #1f2937;
+  background:
+    radial-gradient(circle at top, rgba(22, 163, 74, 0.16), transparent 35%),
+    linear-gradient(180deg, #f6fbf4 0%, #eef7ef 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 0.9rem;
+  padding: 0.8rem 0.95rem;
+  background: #ffffff;
+  color: #111827;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.screen-shell,
+.app-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+}
+
+.screen-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.auth-card,
+.dashboard-card,
+.loading-card {
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 1.4rem;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(12px);
+}
+
+.auth-card,
+.loading-card {
+  width: min(100%, 560px);
+  padding: 2rem;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.volunteer-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.dashboard-card {
+  padding: 1.5rem;
+}
+
+.form-card {
+  grid-column: 1 / -1;
+}
+
+.stacked-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span,
+.selection-group legend {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.split-fields {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.selection-group {
+  border: 1px solid #dbe4dc;
+  border-radius: 1rem;
+  padding: 1rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.checkbox-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 0.8rem;
+  background: #f9fafb;
+}
+
+.checkbox-row input {
+  width: auto;
+  margin-top: 0.2rem;
+}
+
+.checkbox-row span {
+  display: grid;
+}
+
+.checkbox-row small {
+  color: #6b7280;
+}
+
+.primary-button,
+.secondary-button,
+.tab-button {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.8rem 1.15rem;
+  font-weight: 600;
+}
+
+.primary-button {
+  background: linear-gradient(135deg, #15803d 0%, #0f766e 100%);
+  color: #ffffff;
+}
+
+.secondary-button {
+  background: #e6f4ea;
+  color: #166534;
+}
+
+.tab-row {
+  display: inline-flex;
+  gap: 0.5rem;
+  padding: 0.35rem;
+  background: #eef7ef;
+  border-radius: 999px;
+}
+
+.tab-button {
+  background: transparent;
+  color: #4b5563;
+}
+
+.tab-button.active {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
+}
+
+.eyebrow {
+  margin: 0 0 0.2rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: #166534;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+.subtle-text,
+.card-meta,
+.helper-text,
+.empty-state {
+  color: #4b5563;
+}
+
+.sample-message {
+  color: #0f172a;
+}
+
+.card-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.mini-card {
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.card-header-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.card-copy {
+  color: #334155;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.status-scheduled {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-draft {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-completed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.error-banner {
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+code {
+  background: #f1f5f9;
+  border-radius: 0.4rem;
+  padding: 0.1rem 0.35rem;
+}
+
+@media (max-width: 720px) {
+  .app-header,
+  .card-header-row {
+    flex-direction: column;
+  }
+
+  .auth-card,
+  .dashboard-card,
+  .loading-card {
+    padding: 1.25rem;
+  }
+}
