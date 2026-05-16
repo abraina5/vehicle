@@ -77,7 +77,7 @@ export function AuthForm({ mode, onSubmit, isBusy }) {
         <input
           autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
           name="password"
-          placeholder="••••••••"
+          placeholder="********"
           required
           type="password"
           value={values.password}

@@ -1,0 +1,33 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "serviceEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "assignedVolunteerIds",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "startAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "reminders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reminderTime",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

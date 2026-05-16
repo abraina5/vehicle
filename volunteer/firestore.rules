@@ -1,0 +1,102 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isAssignedEvent() {
+      return isSignedIn()
+        && resource.data.assignedVolunteerIds is list
+        && request.auth.uid in resource.data.assignedVolunteerIds;
+    }
+
+    function validUserSelfCreate(userId) {
+      return isOwner(userId)
+        && request.resource.data.uid == request.auth.uid
+        && request.auth.token.email != null
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'volunteer'
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'email',
+          'role',
+          'createdAt'
+        ]);
+    }
+
+    function validVolunteerSelfCreate(volunteerId) {
+      return isOwner(volunteerId)
+        && request.resource.data.uid == request.auth.uid
+        && request.auth.token.email != null
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.keys().hasOnly([
+          'uid',
+          'email',
+          'name',
+          'phoneNumber',
+          'emergencyContact',
+          'notes',
+          'createdAt',
+          'updatedAt'
+        ]);
+    }
+
+    function validVolunteerSelfUpdate() {
+      return request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.diff(resource.data).changedKeys().hasOnly([
+          'name',
+          'phoneNumber',
+          'emergencyContact',
+          'notes',
+          'updatedAt'
+        ]);
+    }
+
+    match /users/{userId} {
+      allow read: if isAdmin() || isOwner(userId);
+      allow create: if isAdmin() || validUserSelfCreate(userId);
+      allow update, delete: if isAdmin();
+    }
+
+    match /volunteers/{volunteerId} {
+      allow read: if isAdmin() || isOwner(volunteerId);
+      allow create: if isAdmin() || validVolunteerSelfCreate(volunteerId);
+      allow update: if isAdmin() || (isOwner(volunteerId) && validVolunteerSelfUpdate());
+      allow delete: if isAdmin();
+    }
+
+    match /serviceEvents/{eventId} {
+      allow read: if isAdmin() || isAssignedEvent();
+      allow write: if isAdmin();
+    }
+
+    match /reminders/{reminderId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /sentMessages/{messageId} {
+      allow read, write: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

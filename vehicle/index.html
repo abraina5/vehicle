@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ISKCON Towaco -  Vehicle License Plate System"
+    />
+    <title>ISKCON Towaco - Vehicle License Plate System</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <h1>ISKCON Towaco - Vehicle License Plate System</h1>
+      <div class="header-actions">
+        <span id="userStatus" class="user-status"></span>
+        <button id="loginBtn" class="btn-config" aria-label="Admin Login">
+          🔐 Admin Login
+        </button>
+        <button
+          id="logoutBtn"
+          class="btn-config"
+          style="display: none;"
+          aria-label="Logout"
+        >
+          🚪 Logout
+        </button>
+        <button
+          id="configToggle"
+          class="btn-config"
+          style="display: none;"
+          aria-label="Configure API"
+        >
+          ⚙️ Settings
+        </button>
+      </div>
+    </header>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal" style="display: none;">
+      <div class="modal-content login-modal">
+        <button class="modal-close" id="closeLoginModal" aria-label="Close">
+          &times;
+        </button>
+        <h2>Admin Login</h2>
+        <div
+          id="defaultPasswordWarning"
+          class="warning-banner"
+          style="display: none;"
+        >
+          ⚠️ You are using the default password. Please change it after logging
+          in!
+        </div>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginUsername">Username:</label>
+            <input
+              type="text"
+              id="loginUsername"
+              required
+              autocomplete="username"
+            />
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Password:</label>
+            <input
+              type="password"
+              id="loginPassword"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <div
+            id="loginError"
+            class="error-message"
+            style="display: none;"
+          ></div>
+          <button type="submit" class="btn-primary">Login</button>
+        </form>
+        <div class="login-help">
+          <p><strong>Default credentials:</strong></p>
+          <p>Username: <code>admin</code></p>
+          <p>Password: <code></code></p>
+          <p style="color: #f59e0b; font-size: 0.875rem;">
+            ⚠️ Change the default password after first login!
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal" style="display: none;">
+      <div class="modal-content login-modal">
+        <button class="modal-close" id="closePasswordModal" aria-label="Close">
+          &times;
+        </button>
+        <h2>Change Admin Password</h2>
+        <form id="changePasswordForm">
+          <div class="form-group">
+            <label for="currentPassword">Current Password:</label>
+            <input
+              type="password"
+              id="currentPassword"
+              required
+              autocomplete="current-password"
+            />
+          </div>
+          <div class="form-group">
+            <label for="newPassword">New Password:</label>
+            <input
+              type="password"
+              id="newPassword"
+              required
+              autocomplete="new-password"
+              minlength="6"
+            />
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirm New Password:</label>
+            <input
+              type="password"
+              id="confirmPassword"
+              required
+              autocomplete="new-password"
+              minlength="6"
+            />
+          </div>
+          <div
+            id="passwordError"
+            class="error-message"
+            style="display: none;"
+          ></div>
+          <button type="submit" class="btn-primary">Change Password</button>
+        </form>
+      </div>
+    </div>
+
+    <main>
+      <!-- Configuration Panel -->
+      <section id="configPanel" class="config-panel" style="display: none;">
+        <h3>Admin Settings</h3>
+
+        <!-- Security Section -->
+        <div class="config-section">
+          <h4>Security</h4>
+          <button id="changePasswordBtn" class="btn-secondary">
+            Change Admin Password
+          </button>
+        </div>
+
+        <!-- OCR Configuration Section -->
+        <div class="config-section">
+          <h4>OCR Configuration</h4>
+          <p id="apiKeyStatus" class="api-status">
+            ⚠ Using Tesseract.js (Basic OCR)
+          </p>
+          <p>
+            For better accuracy, get a free API key from
+            <a href="https://platerecognizer.com" target="_blank"
+              >Plate Recognizer</a
+            >
+            (2,500 free calls/month)
+          </p>
+          <div class="form-group">
+            <label for="apiKeyInput">Plate Recognizer API Key:</label>
+            <input
+              type="text"
+              id="apiKeyInput"
+              placeholder="Enter your API key"
+              style="font-family: monospace;"
+            />
+          </div>
+          <div class="config-actions">
+            <button id="saveApiKey" class="btn-primary">Save API Key</button>
+            <button id="clearApiKey" class="btn-secondary">
+              Clear API Key
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Add New Record Section -->
+      <section class="add-record-section" aria-label="Add new record">
+        <h2>Add New Record</h2>
+        <form id="addRecordForm" class="add-record-form">
+          <div class="form-group">
+            <label for="plateImage">License Plate Image (Optional)</label>
+            <input
+              type="file"
+              id="plateImage"
+              name="plateImage"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+            />
+            <small
+              style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;"
+            >
+              OCR will attempt to read the plate number. Please verify the
+              result.
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="plateNumber">Plate Number *</label>
+            <input
+              type="text"
+              id="plateNumber"
+              name="plateNumber"
+              placeholder="Enter or verify plate number"
+              required
+              aria-required="true"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="ownerName">Owner Name *</label>
+            <input
+              type="text"
+              id="ownerName"
+              name="ownerName"
+              placeholder="Enter owner name"
+              required
+              aria-required="true"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="phoneNumber">Phone Number *</label>
+            <input
+              type="tel"
+              id="phoneNumber"
+              name="phoneNumber"
+              placeholder="Enter phone number"
+              required
+              aria-required="true"
+            />
+            <small
+              style="color: #666; font-size: 0.85rem; margin-top: 0.25rem; display: block;"
+            >
+              Any common phone format is okay, such as <code>(973) 555-1234</code> or
+              <code>+1 973 555 1234</code>.
+            </small>
+          </div>
+
+          <button type="submit" class="btn-primary">Add Record</button>
+        </form>
+      </section>
+
+      <!-- Search Section -->
+      <section class="search-section" aria-label="Search records">
+        <h2>Search Records</h2>
+        <div class="search-controls">
+          <div class="form-group" id="searchNameGroup" style="display: none;">
+            <label for="searchName">Search by Name (Admin Only)</label>
+            <input
+              type="text"
+              id="searchName"
+              name="searchName"
+              placeholder="Enter owner name"
+              disabled
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="searchPlate">Search by Plate Number</label>
+            <input
+              type="text"
+              id="searchPlate"
+              name="searchPlate"
+              placeholder="Enter plate number"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Results Section -->
+      <section class="results-section" aria-label="Search results">
+        <h2>
+          Records <span id="recordCounter" class="record-counter">(0)</span>
+        </h2>
+        <div id="recordsContainer" class="records-container">
+          <!-- Record cards will be dynamically inserted here -->
+        </div>
+        <div id="noResultsMessage" class="no-results" style="display: none;">
+          <p>No records found.</p>
+        </div>
+      </section>
+
+      <!-- Message Container -->
+      <div
+        id="messageContainer"
+        class="message-container"
+        role="alert"
+        aria-live="polite"
+      ></div>
+    </main>
+
+    <!-- Image Modal -->
+    <div
+      id="imageModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+      style="display: none;"
+    >
+      <div class="modal-content">
+        <button class="modal-close" aria-label="Close modal">&times;</button>
+        <h2 id="modalTitle" class="sr-only">Full size image</h2>
+        <img id="modalImage" src="" alt="Full size license plate image" />
+      </div>
+    </div>
+
+    <!-- Message Composer Modal -->
+    <div
+      id="messageModal"
+      class="modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="messageModalTitle"
+      style="display: none;"
+    >
+      <div class="modal-content message-modal">
+        <button class="modal-close" id="closeMessageModal" aria-label="Close modal">&times;</button>
+        <div class="message-modal-header">
+          <div>
+            <h2 id="messageModalTitle">Compose message</h2>
+            <p class="modal-description">
+              Send a quick note to the owner of
+              <strong id="messageModalPlate"></strong>
+            </p>
+          </div>
+          <span class="message-modal-badge">SEND MESSAGE</span>
+        </div>
+        <div class="form-group message-body-group">
+          <label for="messageBody">Message</label>
+          <textarea
+            id="messageBody"
+            rows="6"
+            placeholder="Type your message here..."
+          ></textarea>
+        </div>
+        <div class="modal-actions">
+          <button id="cancelMessageBtn" class="btn-secondary" type="button">
+            Cancel
+          </button>
+          <button id="sendMessageBtn" class="btn-primary" type="button">
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- JavaScript Files -->
+    <!-- Firebase SDK (Database and Auth only - no Storage needed for base64) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <!-- Firebase Configuration -->
+    <script src="runtime-config.local.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <!-- Tesseract.js for OCR -->
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="auth.js"></script>
+    <script src="storage.js"></script>
+    <script src="search.js"></script>
+    <script src="form.js"></script>
+    <script src="ui.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

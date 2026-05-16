@@ -1,0 +1,25 @@
+{
+  "functions": {
+    "source": "functions"
+  },
+  "hosting": {
+    "public": "vehicle",
+    "ignore": [
+      "firebase.hybrid.local.json",
+      "**/.*",
+      "**/node_modules/**"
+    ]
+  },
+  "emulators": {
+    "functions": {
+      "port": 5001
+    },
+    "hosting": {
+      "port": 5000
+    },
+    "ui": {
+      "enabled": false
+    },
+    "singleProjectMode": true
+  }
+}
