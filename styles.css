@@ -227,7 +227,8 @@ section h2 {
 /* Form Inputs - Requirement 8.2: Touch-friendly sizes */
 .form-group input[type="text"],
 .form-group input[type="tel"],
-.form-group input[type="file"] {
+.form-group input[type="file"],
+.form-group select {
   width: 100%;
   min-height: var(--min-touch-target);
   padding: var(--spacing-sm) var(--spacing-md);
@@ -256,8 +257,7 @@ section h2 {
 
 /* ===== Button Styles ===== */
 /* Requirement 8.2: Touch-friendly button sizes (44x44px minimum) */
-.btn-primary,
-.btn-delete {
+.btn-primary {
   min-height: var(--min-touch-target);
   padding: var(--spacing-sm) var(--spacing-lg);
   border: none;
@@ -290,51 +290,6 @@ section h2 {
   cursor: not-allowed;
 }
 
-.btn-message,
-.btn-delete {
-  min-height: var(--min-touch-target);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border: none;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-  width: 100%;
-}
-
-.btn-message {
-  width: auto;
-  min-height: auto;
-  padding: 0.45rem 0.8rem;
-  border: 1px solid #cbd5e1;
-  background-color: #f8fafc;
-  color: #1e3a8a;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
-}
-
-.btn-message:hover {
-  background-color: #e2e8f0;
-}
-
-.btn-delete {
-  background-color: var(--danger-color);
-  color: var(--bg-white);
-}
-
-.btn-delete:hover {
-  background-color: var(--danger-hover);
-}
-
-.btn-delete:active {
-  transform: scale(0.98);
-}
-
 /* ===== Records Container ===== */
 /* Requirement 8.5: Vertical stacking for mobile devices */
 .records-container {
@@ -349,7 +304,7 @@ section h2 {
   background-color: var(--bg-white);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: calc(var(--spacing-md) + 2.75rem) var(--spacing-md) var(--spacing-md);
+  padding: var(--spacing-md);
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
@@ -404,16 +359,6 @@ section h2 {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-}
-
-.record-actions {
-  display: flex;
-  flex-direction: row;
-  gap: var(--spacing-sm);
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
-  align-items: center;
 }
 
 .record-field {
@@ -539,67 +484,6 @@ section h2 {
   justify-content: center;
 }
 
-.message-modal {
-  flex-direction: column;
-  align-items: stretch;
-  padding: 1.25rem;
-  width: min(100%, 620px);
-  min-height: min(78vh, 620px);
-  background-color: var(--bg-white);
-  border-radius: 1rem;
-  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
-}
-
-.message-modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  padding-right: 2.5rem;
-}
-
-.message-modal-header h2 {
-  margin: 0 0 0.35rem;
-}
-
-.message-modal-badge {
-  flex-shrink: 0;
-  align-self: flex-start;
-  padding: 0.35rem 0.65rem;
-  border-radius: 999px;
-  background-color: #e8f0fe;
-  color: #1a73e8;
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.modal-description {
-  margin: 0 0 var(--spacing-md);
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
-
-.message-body-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-#messageBody {
-  width: 100%;
-  min-height: 260px;
-  flex: 1;
-  padding: var(--spacing-sm) var(--spacing-md);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 1rem;
-  font-family: inherit;
-  resize: vertical;
-  background-color: #fcfdff;
-}
-
 .modal-actions {
   display: flex;
   gap: var(--spacing-sm);
@@ -697,23 +581,6 @@ section h2 {
     flex: 1;
   }
 
-  .record-actions {
-    position: static;
-    margin-left: auto;
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .btn-message,
-  .btn-delete {
-    width: auto;
-  }
-  
-  .btn-delete {
-    width: auto;
-    align-self: flex-start;
-  }
-  
   /* Message positioning for larger screens */
   .message-container {
     left: auto;
@@ -753,25 +620,13 @@ section h2 {
   /* Vertical layout for record cards on desktop */
   .record-card {
     flex-direction: column;
-    padding: calc(var(--spacing-md) + 2.75rem) var(--spacing-md) var(--spacing-md);
+    padding: var(--spacing-md);
   }
   
   .record-image-container {
     width: 100%;
   }
   
-  .record-actions {
-    position: absolute;
-    top: var(--spacing-md);
-    right: var(--spacing-md);
-    flex-direction: row;
-    align-items: center;
-  }
-
-  .btn-message,
-  .btn-delete {
-    width: auto;
-  }
 }
 
 /* Large Desktop: 1440px and up */
@@ -792,7 +647,6 @@ section h2 {
   
   .add-record-section,
   .search-section,
-  .btn-delete,
   .message-container {
     display: none;
   }
@@ -810,33 +664,65 @@ section h2 {
 }
 
 .login-modal {
-  max-width: 400px;
-  padding: var(--spacing-xl);
+  width: min(92vw, 420px);
+  max-width: 420px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: var(--spacing-md);
+  padding: 2rem;
+  background-color: var(--bg-white);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
 }
 
 .login-modal h2 {
   margin-top: 0;
-  margin-bottom: var(--spacing-lg);
+  margin-bottom: 0;
   color: var(--text-primary);
+  font-size: 1.6rem;
+  line-height: 1.2;
+}
+
+.login-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
 }
 
 .login-modal .form-group {
-  margin-bottom: var(--spacing-md);
+  margin-bottom: 0;
 }
 
 .login-modal label {
   display: block;
-  margin-bottom: 0.5rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .login-modal input {
   width: 100%;
+  min-height: var(--min-touch-target);
   padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
   font-size: 1rem;
+  color: var(--text-primary);
+  background-color: var(--bg-white);
+}
+
+.login-modal select {
+  width: 100%;
+  min-height: var(--min-touch-target);
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  color: var(--text-primary);
+  background-color: var(--bg-white);
 }
 
 .login-modal input:focus {
@@ -847,15 +733,19 @@ section h2 {
 
 .login-modal button[type="submit"] {
   width: 100%;
-  margin-top: var(--spacing-md);
+  margin-top: var(--spacing-sm);
 }
 
 .login-help {
-  margin-top: var(--spacing-lg);
-  padding-top: var(--spacing-lg);
+  margin-top: 0;
+  padding-top: var(--spacing-md);
   border-top: 1px solid #e9ecef;
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.login-help p {
+  margin: 0 0 0.5rem;
 }
 
 .login-help code {
@@ -870,8 +760,8 @@ section h2 {
   color: var(--error-color);
   background-color: #fee;
   padding: 0.75rem;
-  border-radius: var(--radius-sm);
-  margin-top: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  margin-top: 0;
   font-size: 0.875rem;
 }
 
@@ -901,31 +791,3 @@ section h2 {
   font-size: 1.1rem;
 }
 
-/* Hide delete buttons by default (shown only for admin) */
-.btn-delete {
-  display: none;
-}
-
-
-/* ===== Privacy & Redaction Styles ===== */
-.record-value.redacted {
-  color: #999;
-  font-style: italic;
-  letter-spacing: 0.1em;
-}
-
-.privacy-note {
-  margin-top: var(--spacing-sm);
-  padding: 0.5rem;
-  background-color: #fff3cd;
-  border: 1px solid #ffc107;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  color: #856404;
-  text-align: center;
-}
-
-.privacy-note::before {
-  content: "";
-  margin-right: 0.25rem;
-}

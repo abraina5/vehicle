@@ -269,24 +269,6 @@ class StorageManager {
     this.listeners = [];
   }
 
-  /**
-   * Delete a record by ID from Firebase or localStorage
-   * Requirement 6.2: Remove record from Firebase
-   * @param {string} id - The ID of the record to delete
-   * @returns {Promise<boolean>} Promise that resolves to true if deletion was successful
-   */
-  async deleteRecord(id) {
-    try {
-      // Delete record from Database (image is stored as base64 in the record)
-      await this.recordsRef.child(id).remove();
-      console.log("Record deleted from Firebase:", id);
-      return true;
-    } catch (e) {
-      console.error("Error deleting record:", e);
-      return false;
-    }
-  }
-
   getLocalRecords() {
     const stored = localStorage.getItem(this.localRecordsKey);
 

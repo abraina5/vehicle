@@ -2,9 +2,6 @@
   "database": {
     "rules": "database.local.rules.json"
   },
-  "functions": {
-    "source": "functions"
-  },
   "hosting": {
     "public": "vehicle",
     "ignore": [
@@ -20,11 +17,8 @@
     "database": {
       "port": 9000
     },
-    "functions": {
-      "port": 5001
-    },
     "hosting": {
-      "port": 5000
+      "port": 5002
     },
     "ui": {
       "enabled": true,

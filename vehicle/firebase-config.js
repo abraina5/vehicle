@@ -15,17 +15,12 @@ const firebaseConfig = {
 };
 
 const runtimeSearchParams = new URLSearchParams(window.location.search);
-const localHosts = new Set(["localhost", "127.0.0.1"]);
 const runtimeOverrides = window.VEHICLE_LOCAL_RUNTIME_CONFIG || {};
-const isHostingEmulator = localHosts.has(window.location.hostname) && window.location.port === "5000";
 
 const emulatorConfig = {
   authUrl: "http://127.0.0.1:9099",
   databaseHost: "127.0.0.1",
   databasePort: 9000,
-  functionsHost: "127.0.0.1",
-  functionsPort: 5001,
-  region: "us-central1",
 };
 
 function parseBooleanFlag(value) {
@@ -40,11 +35,6 @@ function parseBooleanFlag(value) {
   return null;
 }
 
-const useFunctionsEmulator =
-  parseBooleanFlag(runtimeSearchParams.get("functionsEmulator")) ??
-  parseBooleanFlag(runtimeOverrides.useFunctionsEmulator) ??
-  isHostingEmulator;
-
 const useDatabaseEmulator =
   parseBooleanFlag(runtimeSearchParams.get("databaseEmulator")) ??
   parseBooleanFlag(runtimeOverrides.useDatabaseEmulator) ??
@@ -54,13 +44,6 @@ const useAuthEmulator =
   parseBooleanFlag(runtimeSearchParams.get("authEmulator")) ??
   parseBooleanFlag(runtimeOverrides.useAuthEmulator) ??
   false;
-
-const messageServiceConfig = {
-  endpoint: useFunctionsEmulator
-    ? `http://${emulatorConfig.functionsHost}:${emulatorConfig.functionsPort}/${firebaseConfig.projectId}/${emulatorConfig.region}/sendVehicleMessage`
-    : `https://${emulatorConfig.region}-${firebaseConfig.projectId}.cloudfunctions.net/sendVehicleMessage`,
-  useFunctionsEmulator,
-};
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
@@ -83,13 +66,11 @@ auth.signInAnonymously().catch((error) => {
 });
 
 console.log(
-  `Firebase initialized successfully (functions emulator: ${useFunctionsEmulator}, database emulator: ${useDatabaseEmulator}, auth emulator: ${useAuthEmulator})`
+  `Firebase initialized successfully (database emulator: ${useDatabaseEmulator}, auth emulator: ${useAuthEmulator})`
 );
 
 if (typeof window !== "undefined") {
-  window.messageServiceConfig = messageServiceConfig;
   window.vehicleRuntimeConfig = {
-    useFunctionsEmulator,
     useDatabaseEmulator,
     useAuthEmulator,
     emulatorConfig,

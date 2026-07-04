@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -15,8 +15,11 @@
       <h1>ISKCON Towaco - Vehicle License Plate System</h1>
       <div class="header-actions">
         <span id="userStatus" class="user-status"></span>
-        <button id="loginBtn" class="btn-config" aria-label="Admin Login">
-          🔐 Admin Login
+        <button id="userLoginBtn" class="btn-config" aria-label="User Login">
+          User Login
+        </button>
+        <button id="adminLoginBtn" class="btn-config" aria-label="Admin Login">
+          Admin Login
         </button>
         <button
           id="logoutBtn"
@@ -24,7 +27,7 @@
           style="display: none;"
           aria-label="Logout"
         >
-          🚪 Logout
+          Logout
         </button>
         <button
           id="configToggle"
@@ -32,7 +35,7 @@
           style="display: none;"
           aria-label="Configure API"
         >
-          ⚙️ Settings
+          Settings
         </button>
       </div>
     </header>
@@ -43,16 +46,9 @@
         <button class="modal-close" id="closeLoginModal" aria-label="Close">
           &times;
         </button>
-        <h2>Admin Login</h2>
-        <div
-          id="defaultPasswordWarning"
-          class="warning-banner"
-          style="display: none;"
-        >
-          ⚠️ You are using the default password. Please change it after logging
-          in!
-        </div>
+        <h2 id="loginModalTitle">Login</h2>
         <form id="loginForm">
+          <input type="hidden" id="loginRole" value="user" />
           <div class="form-group">
             <label for="loginUsername">Username:</label>
             <input
@@ -79,12 +75,7 @@
           <button type="submit" class="btn-primary">Login</button>
         </form>
         <div class="login-help">
-          <p><strong>Default credentials:</strong></p>
-          <p>Username: <code>admin</code></p>
-          <p>Password: <code></code></p>
-          <p style="color: #f59e0b; font-size: 0.875rem;">
-            ⚠️ Change the default password after first login!
-          </p>
+          <p><strong>Use the provided login credentials.</strong></p>
         </div>
       </div>
     </div>
@@ -98,7 +89,14 @@
         <h2>Change Admin Password</h2>
         <form id="changePasswordForm">
           <div class="form-group">
-            <label for="currentPassword">Current Password:</label>
+            <label for="passwordTargetRole">Account:</label>
+            <select id="passwordTargetRole" required>
+              <option value="user">Regular User</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="currentPassword">Current Admin Password:</label>
             <input
               type="password"
               id="currentPassword"
@@ -107,7 +105,7 @@
             />
           </div>
           <div class="form-group">
-            <label for="newPassword">New Password:</label>
+            <label for="newPassword">New Account Password:</label>
             <input
               type="password"
               id="newPassword"
@@ -141,7 +139,6 @@
       <section id="configPanel" class="config-panel" style="display: none;">
         <h3>Admin Settings</h3>
 
-        <!-- Security Section -->
         <div class="config-section">
           <h4>Security</h4>
           <button id="changePasswordBtn" class="btn-secondary">
@@ -153,7 +150,7 @@
         <div class="config-section">
           <h4>OCR Configuration</h4>
           <p id="apiKeyStatus" class="api-status">
-            ⚠ Using Tesseract.js (Basic OCR)
+            Using Tesseract.js (Basic OCR)
           </p>
           <p>
             For better accuracy, get a free API key from
@@ -312,46 +309,6 @@
       </div>
     </div>
 
-    <!-- Message Composer Modal -->
-    <div
-      id="messageModal"
-      class="modal"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="messageModalTitle"
-      style="display: none;"
-    >
-      <div class="modal-content message-modal">
-        <button class="modal-close" id="closeMessageModal" aria-label="Close modal">&times;</button>
-        <div class="message-modal-header">
-          <div>
-            <h2 id="messageModalTitle">Compose message</h2>
-            <p class="modal-description">
-              Send a quick note to the owner of
-              <strong id="messageModalPlate"></strong>
-            </p>
-          </div>
-          <span class="message-modal-badge">SEND MESSAGE</span>
-        </div>
-        <div class="form-group message-body-group">
-          <label for="messageBody">Message</label>
-          <textarea
-            id="messageBody"
-            rows="6"
-            placeholder="Type your message here..."
-          ></textarea>
-        </div>
-        <div class="modal-actions">
-          <button id="cancelMessageBtn" class="btn-secondary" type="button">
-            Cancel
-          </button>
-          <button id="sendMessageBtn" class="btn-primary" type="button">
-            Send
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- JavaScript Files -->
     <!-- Firebase SDK (Database and Auth only - no Storage needed for base64) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -373,3 +330,4 @@
     <script src="app.js"></script>
   </body>
 </html>
+

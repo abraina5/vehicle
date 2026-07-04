@@ -17,9 +17,6 @@ const firebaseConfig = {
 
 let database = null;
 let auth = null;
-let messageServiceConfig = {
-  endpoint: `https://us-central1-${firebaseConfig.projectId}.cloudfunctions.net/sendVehicleMessage`,
-};
 
 if (typeof firebase !== 'undefined') {
   try {
@@ -41,8 +38,4 @@ if (typeof firebase !== 'undefined') {
   }
 } else {
   console.warn("Firebase SDK is not available. Local storage fallback will be used.");
-}
-
-if (typeof window !== "undefined") {
-  window.messageServiceConfig = messageServiceConfig;
 }

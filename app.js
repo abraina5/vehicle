@@ -1,4 +1,4 @@
-/**
+﻿/**
  * App Controller - Main application initialization and coordination
  * Requirements: 5.1, 5.2, 5.4, 6.4
  */
@@ -105,36 +105,6 @@ class App {
       });
     }
 
-    // Set up event listener for record action buttons using event delegation
-    const recordsContainer = document.getElementById("recordsContainer");
-    if (recordsContainer) {
-      recordsContainer.addEventListener("click", (e) => {
-        if (e.target.classList.contains("btn-delete")) {
-          // Check if user is admin before allowing delete
-          if (!this.authManager.isAdmin()) {
-            this.uiManager.showMessage(
-              "Only admins can delete records. Please login.",
-              "error"
-            );
-            return;
-          }
-          const recordId = e.target.getAttribute("data-id");
-          this.handleDelete(recordId);
-        } else if (e.target.classList.contains("btn-message")) {
-          const plateNumber = e.target.getAttribute("data-plate");
-          const phoneNumber = e.target.getAttribute("data-phone");
-          if (!phoneNumber || phoneNumber.trim() === "") {
-            this.uiManager.showMessage(
-              "No contact phone number is available for this vehicle.",
-              "error"
-            );
-            return;
-          }
-          this.uiManager.openMessageComposer(plateNumber, phoneNumber);
-        }
-      });
-    }
-
     // Set up authentication event listeners
     this.setupAuthListeners();
   }
@@ -143,9 +113,12 @@ class App {
    * Set up authentication-related event listeners
    */
   setupAuthListeners() {
-    const loginBtn = document.getElementById("loginBtn");
+    const userLoginBtn = document.getElementById("userLoginBtn");
+    const adminLoginBtn = document.getElementById("adminLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const loginModal = document.getElementById("loginModal");
+    const loginModalTitle = document.getElementById("loginModalTitle");
+    const loginRole = document.getElementById("loginRole");
     const closeLoginModal = document.getElementById("closeLoginModal");
     const loginForm = document.getElementById("loginForm");
     const changePasswordBtn = document.getElementById("changePasswordBtn");
@@ -153,16 +126,28 @@ class App {
     const closePasswordModal = document.getElementById("closePasswordModal");
     const changePasswordForm = document.getElementById("changePasswordForm");
 
-    // Login button
-    if (loginBtn) {
-      loginBtn.addEventListener("click", () => {
+    const openLoginModal = (role) => {
+      if (loginRole) {
+        loginRole.value = role;
+      }
+      if (loginModalTitle) {
+        loginModalTitle.textContent = role === "admin" ? "Admin Login" : "User Login";
+      }
+      const loginError = document.getElementById("loginError");
+      if (loginError) {
+        loginError.style.display = "none";
+      }
+      if (loginModal) {
         loginModal.style.display = "flex";
-        // Show warning if using default password
-        if (this.authManager.isDefaultPassword()) {
-          document.getElementById("defaultPasswordWarning").style.display =
-            "block";
-        }
-      });
+      }
+    };
+
+    if (userLoginBtn) {
+      userLoginBtn.addEventListener("click", () => openLoginModal("user"));
+    }
+
+    if (adminLoginBtn) {
+      adminLoginBtn.addEventListener("click", () => openLoginModal("admin"));
     }
 
     // Logout button
@@ -170,6 +155,7 @@ class App {
       logoutBtn.addEventListener("click", () => {
         this.authManager.logout();
         this.updateAuthUI();
+        this.loadAndDisplayRecords();
         this.uiManager.showMessage("Logged out successfully", "info");
       });
     }
@@ -187,21 +173,15 @@ class App {
         e.preventDefault();
         const username = document.getElementById("loginUsername").value;
         const password = document.getElementById("loginPassword").value;
+        const role = document.getElementById("loginRole").value || "user";
 
-        if (this.authManager.login(username, password)) {
+        if (this.authManager.login(username, password, role)) {
           loginModal.style.display = "none";
           this.updateAuthUI();
+          this.loadAndDisplayRecords();
           this.uiManager.showMessage("Login successful!", "success");
           loginForm.reset();
           document.getElementById("loginError").style.display = "none";
-
-          // Show warning if using default password
-          if (this.authManager.isDefaultPassword()) {
-            this.uiManager.showMessage(
-              "⚠️ Please change the default password!",
-              "warning"
-            );
-          }
         } else {
           document.getElementById("loginError").textContent =
             "Invalid username or password";
@@ -226,52 +206,46 @@ class App {
 
     // Change password form submission
     if (changePasswordForm) {
-      changePasswordForm.addEventListener("submit", async (e) => {
+      changePasswordForm.addEventListener("submit", (e) => {
         e.preventDefault();
-        const currentPassword = document.getElementById("currentPassword")
-          .value;
+
+        const targetRole = document.getElementById("passwordTargetRole").value;
+        const currentPassword = document.getElementById("currentPassword").value;
         const newPassword = document.getElementById("newPassword").value;
-        const confirmPassword = document.getElementById("confirmPassword")
-          .value;
+        const confirmPassword = document.getElementById("confirmPassword").value;
         const errorDiv = document.getElementById("passwordError");
 
         if (newPassword !== confirmPassword) {
-          errorDiv.textContent = "New passwords do not match";
+          errorDiv.textContent = "New passwords do not match.";
           errorDiv.style.display = "block";
           return;
         }
 
         if (newPassword.length < 6) {
-          errorDiv.textContent = "Password must be at least 6 characters";
+          errorDiv.textContent = "Password must be at least 6 characters.";
           errorDiv.style.display = "block";
           return;
         }
 
-        try {
-          const success = await this.authManager.changePassword(
-            currentPassword,
-            newPassword
+        if (
+          this.authManager.changePassword(targetRole, currentPassword, newPassword)
+        ) {
+          changePasswordModal.style.display = "none";
+          changePasswordForm.reset();
+          errorDiv.style.display = "none";
+          const accountLabel = targetRole === "admin" ? "Admin" : "Regular user";
+          this.uiManager.showMessage(
+            `${accountLabel} password changed successfully.`,
+            "success"
           );
-          if (success) {
-            changePasswordModal.style.display = "none";
-            this.uiManager.showMessage(
-              "Password changed successfully.",
-              "success"
-            );
-            changePasswordForm.reset();
-            errorDiv.style.display = "none";
-          } else {
-            errorDiv.textContent = "Current password is incorrect";
-            errorDiv.style.display = "block";
-          }
-        } catch (error) {
-          errorDiv.textContent = "Failed to change password. Please try again.";
+        } else {
+          errorDiv.textContent = "Current admin password is incorrect.";
           errorDiv.style.display = "block";
         }
       });
     }
 
-    // Close modals when clicking outside
+    // Close login modal when clicking outside
     window.addEventListener("click", (e) => {
       if (e.target === loginModal) {
         loginModal.style.display = "none";
@@ -286,7 +260,8 @@ class App {
    * Update UI based on authentication status
    */
   updateAuthUI() {
-    const loginBtn = document.getElementById("loginBtn");
+    const userLoginBtn = document.getElementById("userLoginBtn");
+    const adminLoginBtn = document.getElementById("adminLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
     const configToggle = document.getElementById("configToggle");
     const userStatus = document.getElementById("userStatus");
@@ -294,35 +269,34 @@ class App {
     const searchNameGroup = document.getElementById("searchNameGroup");
     const searchNameInput = document.getElementById("searchName");
 
-    if (this.authManager.isAdmin()) {
-      // Admin is logged in
-      loginBtn.style.display = "none";
+    if (this.authManager.isLoggedIn()) {
+      const isAdmin = this.authManager.isAdmin();
+      userLoginBtn.style.display = "none";
+      adminLoginBtn.style.display = "none";
       logoutBtn.style.display = "inline-block";
-      configToggle.style.display = "inline-block";
-      userStatus.textContent = "👤 Admin";
+      configToggle.style.display = isAdmin ? "inline-block" : "none";
+      userStatus.textContent = isAdmin ? "Admin" : "User";
       userStatus.style.color = "#10b981";
       userStatus.style.fontWeight = "600";
 
-      // Show delete buttons
-      this.showDeleteButtons(true);
-
-      // Show name search field for admin
       if (searchNameGroup) {
-        searchNameGroup.style.display = "block";
+        searchNameGroup.style.display = isAdmin ? "block" : "none";
       }
       if (searchNameInput) {
-        searchNameInput.disabled = false;
+        searchNameInput.disabled = !isAdmin;
+        if (!isAdmin) {
+          searchNameInput.value = "";
+          this.currentSearchFilters.name = "";
+        }
       }
     } else {
       // Not logged in
-      loginBtn.style.display = "inline-block";
+      userLoginBtn.style.display = "inline-block";
+      adminLoginBtn.style.display = "inline-block";
       logoutBtn.style.display = "none";
       configToggle.style.display = "none";
       userStatus.textContent = "";
       configPanel.style.display = "none";
-
-      // Hide delete buttons
-      this.showDeleteButtons(false);
 
       // Hide name search field for non-admin
       if (searchNameGroup) {
@@ -336,17 +310,6 @@ class App {
       // Clear name filter when logging out
       this.currentSearchFilters.name = "";
     }
-  }
-
-  /**
-   * Show or hide delete buttons based on admin status
-   * @param {boolean} show - Whether to show delete buttons
-   */
-  showDeleteButtons(show) {
-    const deleteButtons = document.querySelectorAll(".btn-delete");
-    deleteButtons.forEach((btn) => {
-      btn.style.display = show ? "block" : "none";
-    });
   }
 
   /**
@@ -435,7 +398,7 @@ class App {
       (error) => {
         // Error callback
         this.uiManager.showMessage(
-          `❌ Failed to store record: ${error.message}`,
+          `Failed to store record: ${error.message}`,
           "error"
         );
       }
@@ -470,7 +433,7 @@ class App {
     const nameQuery = searchNameInput ? searchNameInput.value : "";
     const plateQuery = searchPlateInput ? searchPlateInput.value : "";
 
-    // Non-admin users can only search by plate number
+    // Logged-out users can only search by plate number
     const isAdmin = this.authManager.isAdmin();
 
     // Store current search filters
@@ -523,38 +486,6 @@ class App {
   }
 
   /**
-   * Handle record deletion
-   * Requirement 6.4: Handle delete button clicks
-   * @param {string} recordId - The ID of the record to delete
-   */
-  handleDelete(recordId) {
-    // Show confirmation dialog
-    // Requirement 6.1: Prompt user to confirm deletion
-    this.uiManager.showDeleteConfirmation(recordId, async (id) => {
-      // User confirmed deletion
-      try {
-        const success = await this.storageManager.deleteRecord(id);
-
-        if (success) {
-          this.uiManager.showMessage("Record deleted successfully.", "success");
-          // No need to reload - real-time listener will update automatically
-        } else {
-          this.uiManager.showMessage(
-            "Failed to delete record. Please try again.",
-            "error"
-          );
-        }
-      } catch (error) {
-        console.error("Delete error:", error);
-        this.uiManager.showMessage(
-          "Failed to delete record. Please try again.",
-          "error"
-        );
-      }
-    });
-  }
-
-  /**
    * Handle send message button clicks
    * @param {string} phone - The owner's phone number
    * @param {string} plateNumber - The vehicle plate number
@@ -570,7 +501,7 @@ class App {
       const filteredRecords = this.applySearchFilters(records);
 
       this.uiManager.renderRecords(filteredRecords);
-      this.updateAuthUI(); // Update delete button visibility
+      this.updateAuthUI();
     });
   }
 
@@ -614,3 +545,4 @@ document.addEventListener("DOMContentLoaded", () => {
   window.app = new App(); // Make app globally accessible for UI privacy checks
   window.app.init();
 });
+

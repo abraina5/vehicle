@@ -1,4 +1,5 @@
 .firebase-config/
 firebase-debug.log
+vehicle-local-server*.log
 functions/node_modules/
 vehicle/.git-backup/

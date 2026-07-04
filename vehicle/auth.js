@@ -1,63 +1,38 @@
 /**
- * Authentication Manager - Handles admin login and role-based access control
+ * Authentication Manager - Handles regular and admin login/session state
  */
 class AuthManager {
   constructor() {
     this.currentUser = null;
     this.sessionKey = "userSession";
-    this.configRef = database.ref("config/adminCredentials");
+    this.userCredentialsKey = "vehicleUserCredentials";
+    this.adminCredentialsKey = "vehicleAdminCredentials";
 
-    // Default admin credentials (will be saved to Firebase on first use)
-    this.adminCredentials = {
-      username: "admin",
-      password: this.hashPassword("admin123"), // Default password
+    // Regular login. Change these source values to change regular access.
+    this.defaultUserCredentials = {
+      username: "user",
+      password: this.hashPassword("user123"),
     };
 
-    // Load credentials from Firebase
-    this.loadCredentialsFromFirebase();
+    // Default admin login. Change these source values to reset the app default.
+    this.defaultAdminCredentials = {
+      username: "admin",
+      password: this.hashPassword("admin123"),
+    };
 
-    // Check for existing session
+    this.userCredentials = this.loadCredentials(
+      this.userCredentialsKey,
+      this.defaultUserCredentials,
+      "user"
+    );
+    this.adminCredentials = this.loadCredentials(
+      this.adminCredentialsKey,
+      this.defaultAdminCredentials,
+      "admin"
+    );
     this.loadSession();
   }
 
-  /**
-   * Load admin credentials from Firebase
-   */
-  async loadCredentialsFromFirebase() {
-    try {
-      const snapshot = await this.configRef.once("value");
-      if (snapshot.exists()) {
-        this.adminCredentials = snapshot.val();
-        console.log("Admin credentials loaded from Firebase");
-      } else {
-        // First time setup - save default credentials to Firebase
-        await this.saveCredentialsToFirebase();
-        console.log("Default admin credentials saved to Firebase");
-      }
-    } catch (error) {
-      console.error("Error loading credentials from Firebase:", error);
-    }
-  }
-
-  /**
-   * Save admin credentials to Firebase
-   */
-  async saveCredentialsToFirebase() {
-    try {
-      await this.configRef.set(this.adminCredentials);
-      console.log("Admin credentials saved to Firebase");
-    } catch (error) {
-      console.error("Error saving credentials to Firebase:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Simple hash function for password (client-side only)
-   * Note: This is basic security. For production, use proper backend authentication
-   * @param {string} password - Password to hash
-   * @returns {string} Hashed password
-   */
   hashPassword(password) {
     let hash = 0;
     for (let i = 0; i < password.length; i++) {
@@ -68,22 +43,35 @@ class AuthManager {
     return hash.toString(36);
   }
 
-  /**
-   * Authenticate user
-   * @param {string} username - Username
-   * @param {string} password - Password
-   * @returns {boolean} True if authentication successful
-   */
-  login(username, password) {
+  loadCredentials(storageKey, defaultCredentials, label) {
+    try {
+      const storedCredentials = localStorage.getItem(storageKey);
+      if (storedCredentials) {
+        return JSON.parse(storedCredentials);
+      }
+    } catch (error) {
+      console.error(`Failed to load ${label} credentials:`, error);
+    }
+
+    return { ...defaultCredentials };
+  }
+
+  saveCredentials(storageKey, credentials) {
+    localStorage.setItem(storageKey, JSON.stringify(credentials));
+  }
+
+  login(username, password, role = "user") {
+    const credentials =
+      role === "admin" ? this.adminCredentials : this.userCredentials;
     const hashedPassword = this.hashPassword(password);
 
     if (
-      username === this.adminCredentials.username &&
-      hashedPassword === this.adminCredentials.password
+      username === credentials.username &&
+      hashedPassword === credentials.password
     ) {
       this.currentUser = {
-        username: username,
-        role: "admin",
+        username,
+        role,
         loginTime: Date.now(),
       };
       this.saveSession();
@@ -93,42 +81,51 @@ class AuthManager {
     return false;
   }
 
-  /**
-   * Log out current user
-   */
   logout() {
     this.currentUser = null;
     localStorage.removeItem(this.sessionKey);
   }
 
-  /**
-   * Check if user is logged in as admin
-   * @returns {boolean} True if admin is logged in
-   */
-  isAdmin() {
-    return this.currentUser && this.currentUser.role === "admin";
+  isLoggedIn() {
+    return Boolean(this.currentUser);
   }
 
-  /**
-   * Get current user
-   * @returns {Object|null} Current user object or null
-   */
+  isAdmin() {
+    return Boolean(this.currentUser && this.currentUser.role === "admin");
+  }
+
   getCurrentUser() {
     return this.currentUser;
   }
 
-  /**
-   * Save session to localStorage (persists across browser refreshes)
-   */
+  changePassword(targetRole, currentAdminPassword, newPassword) {
+    if (!this.isAdmin()) {
+      return false;
+    }
+
+    if (
+      this.hashPassword(currentAdminPassword) !== this.adminCredentials.password
+    ) {
+      return false;
+    }
+
+    if (targetRole === "admin") {
+      this.adminCredentials.password = this.hashPassword(newPassword);
+      this.saveCredentials(this.adminCredentialsKey, this.adminCredentials);
+    } else {
+      this.userCredentials.password = this.hashPassword(newPassword);
+      this.saveCredentials(this.userCredentialsKey, this.userCredentials);
+    }
+
+    return true;
+  }
+
   saveSession() {
     if (this.currentUser) {
       localStorage.setItem(this.sessionKey, JSON.stringify(this.currentUser));
     }
   }
 
-  /**
-   * Load session from localStorage
-   */
   loadSession() {
     const session = localStorage.getItem(this.sessionKey);
     if (session) {
@@ -139,34 +136,5 @@ class AuthManager {
         this.currentUser = null;
       }
     }
-  }
-
-  /**
-   * Change admin password
-   * @param {string} currentPassword - Current password
-   * @param {string} newPassword - New password
-   * @returns {Promise<boolean>} Promise that resolves to true if password changed successfully
-   */
-  async changePassword(currentPassword, newPassword) {
-    if (!this.isAdmin()) {
-      return false;
-    }
-
-    const hashedCurrent = this.hashPassword(currentPassword);
-    if (hashedCurrent !== this.adminCredentials.password) {
-      return false;
-    }
-
-    this.adminCredentials.password = this.hashPassword(newPassword);
-    await this.saveCredentialsToFirebase();
-    return true;
-  }
-
-  /**
-   * Check if this is first time setup (using default password)
-   * @returns {boolean} True if using default password
-   */
-  isDefaultPassword() {
-    return this.adminCredentials.password === this.hashPassword("admin123");
   }
 }
