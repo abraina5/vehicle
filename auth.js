@@ -16,8 +16,8 @@ class AuthManager {
 
     // Default admin login. Change these source values to reset the app default.
     this.defaultAdminCredentials = {
-      username: "admin",
-      password: this.hashPassword("admin123"),
+      username: "krishna",
+      password: this.hashPassword("krishna123"),
     };
 
     this.userCredentials = this.loadCredentials(
