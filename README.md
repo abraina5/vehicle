@@ -56,8 +56,8 @@ A mobile-friendly web application designed to help temple visitors manage parkin
 Default credentials:
 
 ```text
-User:  user / user123
-Admin: admin / admin123
+User:  user / @@@
+Admin: admin / @@@
 ```
 
 ## Technical Features
